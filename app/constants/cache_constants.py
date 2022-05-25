@@ -1,0 +1,2 @@
+class CacheConstant:
+    configs = 'configs'
