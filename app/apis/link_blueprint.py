@@ -16,6 +16,7 @@ _db = MongoDB()
 #     return json({'token': str(token)})
 
 # Get all customed links from a URL
+
 @links_bp.route('/get-link', methods={'GET'})
 async def get_link(request):
     args = request.args
@@ -28,10 +29,10 @@ async def get_link(request):
 async def create_link(request):
     body = request.json
     original_url = body['url']
-    shortened_link = _db.create_link(original_url)
+    customed_link = _db.create_link(original_url)
     # return link
     return json({
-        'message': f'{shortened_link}',
+        'message': f'{customed_link}',
     })
  
 
@@ -42,3 +43,8 @@ async def get_url(request):
     return json(result)
 
 
+@links_bp.route('/get-view-logs', methods={'GET'})
+async def get_view_logs(request):
+    url = request.args.get('url')
+    view_logs = _db.get_view_logs(url)     
+    return json(view_logs)

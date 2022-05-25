@@ -1,12 +1,9 @@
 from pymongo import MongoClient
-from datetime import datetime
-from datetime import timezone
 from uuid import uuid4
 from app.constants.mongodb_constants import MongoCollections, MongoIndex, MongoKeys
 from config import MongoDBConfig
 from app.utils.time_utils import get_timestamp
 from app.utils.logger_utils import get_logger # logger utility
-import json
 
 logger = get_logger('MongoDB')
 
@@ -14,7 +11,6 @@ class MongoDB:
     def __init__(self, connection_url=None):
         if connection_url is None:
             connection_url = f'mongodb://{MongoDBConfig.USERNAME}:{MongoDBConfig.PASSWORD}@{MongoDBConfig.HOST}:{MongoDBConfig.PORT}'
-
         self.connection_url = connection_url.split('@')[-1]
         self.client = MongoClient(connection_url)
         self.db = self.client[MongoDBConfig.DATABASE]
@@ -76,20 +72,41 @@ class MongoDB:
     # From a link, gets the URL and the infos about that URL
     def get_url(self, link):
         try:
-            filter_ = {'link': link}
-            link_instance = self._links_col.find_one(filter_, {'url':1, 'nonce': 1}) # find one instance of the input link
-            if link_instance != None:
-                url = link_instance['url']
-                all_links = self.get_link(url) # get all links generated from the same URL of the input link
-                nonce = all_links['nonce']
-                result = {'url': url, 'nonce': nonce}
+            link_filter = {'link': link}
+            link_doc = self._links_col.find_one(link_filter, {'url':1, 'nonce': 1, 'view': 1}) # find one instance of the input link
+            if link_doc != None:
+                # Update the view on the link's document 
+                link_view = link_doc['view']
+                update_link_view = {'$set': {'view': link_view+1}}
+                self._links_col.update_one(link_filter, update_link_view)
+                # Update the views log in the URL collection
+                url = link_doc['url'] # Get the URL
+                url_filter = {'url': url}
+                url_doc = self._urls_col.find_one(url_filter)
+                view_logs = url_doc['view_logs']
+                timestamp = get_timestamp()
+                if timestamp in view_logs: # if timestamp is already in the view log then increment the view count
+                    view_logs[timestamp] = view_logs[timestamp] + 1
+                else: # else view count = 1
+                    view_logs[timestamp] = 1
+                update_url_view_logs = {'$set': {'view_logs': view_logs}}
+                self._urls_col.update_one(url_filter, update_url_view_logs)
+                # Return the URL and the nonce of the input link 
+                result = {'url': link_doc['url'], 'nonce': link_doc['nonce']}
                 return result 
             else:
                 return None  
         except Exception as ex:
             logger.exception(ex) 
 
-
+    # From an URL, get the view logs
+    def get_view_logs(self, url):
+        try:
+            filter_ = {'url':url}
+            url_doc = self._urls_col.find_one(filter_)
+            return url_doc['view_logs']
+        except Exception as ex:
+            logger.exception(ex)
 
 
 
