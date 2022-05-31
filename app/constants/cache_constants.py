@@ -1,2 +1,0 @@
-class CacheConstant:
-    configs = 'configs'
