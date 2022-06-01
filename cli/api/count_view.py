@@ -1,6 +1,5 @@
 # cli/api/count_view_logs.py
 # main code for the API
-from email.policy import default
 import time
 import click
 
@@ -12,6 +11,7 @@ logger = get_logger('Count view logs')
 _db = MongoDB()
 
 def _get_url_views(url):
+    '''Get the number of views from an URL, by adding the views from individual links'''
     url_view = 0
     links = _db.get_all_links(url)['links'] # get all links belong to that url
     for link in links:
@@ -21,8 +21,8 @@ def _get_url_views(url):
 
 @click.command()
 @click.option('--minute', '-m', default= 5, help='Time interval (in minutes) to update view logs')
-# @click.argument('url', nargs=1, default='all')
 def count_view(minute):
+    '''Calculate the view_logs of an URL'''
     urls = _db.get_all_urls()
     while True:
         try:

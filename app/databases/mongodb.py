@@ -23,8 +23,8 @@ class MongoDB:
             self._links_col.create_index([('_id', 'hashed')], name=MongoIndex.link_index)
         logger.info('Indexed !!!')
 
-    # get all URLs in the database
     def get_all_urls(self):
+        '''Get all URLS in the database'''
         try:
             cursor = self._urls_col.find({}, {'url': 1})
             queried_result = list(cursor)
@@ -36,8 +36,8 @@ class MongoDB:
             logger.exception(ex)
         return None
 
-    # get info of a links
     def get_link(self, link):
+        '''Get a document from the "links" collection'''
         try:
             filter_ = {'link': link}
             cursor = self._links_col.find_one(filter_)
@@ -45,8 +45,8 @@ class MongoDB:
         except Exception as ex:
             logger.exception(ex)
 
-    # Get all customed links from a URL
     def get_all_links(self, url):
+        '''Get all links from an URL'''
         try:
             filter_ = {'url': url} # query with URL
             cursor = self._links_col.find(filter_)
@@ -63,11 +63,12 @@ class MongoDB:
     
     # generate a link from an url
     def _generate_link(self, url):
+        '''Generate a link from an UEL'''
         shortened_link = str(uuid4())
         return shortened_link
 
-    # Create a new link from an URL and insert into database
     def create_link(self, url):
+        '''Create a new link from an URL and insert into database'''
         try: 
             link = self._generate_link(url) # create the new link
             # update in the database
@@ -91,16 +92,16 @@ class MongoDB:
         except Exception as ex:
             logger.exception(ex) 
 
-    # Update a link document
     def update_link(self, link, updated_link_doc):
+        '''Update a document in the "links" collection'''
         try:
             self._links_col.update_one({'link':link}, updated_link_doc) 
         except Exception as ex:
             logger.exception(ex)
             logger.warning(f'Some thing went wrong with updating link {link}')
 
-    # From a link, gets the URL and the infos about that URL
     def get_original_url(self, link):
+        ''' From a link, gets the URL and the infos about that URL'''
         try:
             link_filter = {'link': link}
             link_doc = self._links_col.find_one(link_filter, {'url':1, 'nonce': 1, 'view': 1}) # find one instance of the input link
@@ -113,8 +114,8 @@ class MongoDB:
         except Exception as ex:
             logger.exception(ex) 
 
-    # Get the URL infos from an URL
     def get_url(self, url):
+        '''Get a document from the "urls" collection''' 
         try:
             filter_ = {'url': url}
             cursor = self._urls_col.find_one(filter_)
@@ -122,8 +123,8 @@ class MongoDB:
         except Exception as ex:
             logger.exception(ex)
 
-    # Update an url document
     def update_url(self, url, updated_url_doc):
+        '''Update a document from the "urls" collection''' 
         try:
             current_time = int(time.time())
             self._urls_col.update_one({'url':url}, updated_url_doc)
